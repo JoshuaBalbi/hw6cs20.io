@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Jade Delight</title>
+</head>
+<style>
+
+.userInfo  label {
+    display: inline-block;
+	float: left;
+	clear: left;
+    width: 150px;
+}
+.userInfo input{
+    display: block;
+    width: 250px;
+    text-align: left;
+}
+
+
+
+</style>
+<body>
+<script>
+
+function MenuItem(name, cost)
+{
+	this.name = name;
+	this.cost = cost;
+}
+
+menuItems = new Array(
+	new MenuItem("Chicken Chop Suey", 5.5),
+	new MenuItem("Sweet and Sour Pork", 7.25),
+	new MenuItem("Shrimp Lo Mein", 6.80),
+	new MenuItem("Moo Shi Chicken", 9.50),
+	new MenuItem("Fried Rice", 3.25)
+);
+
+function makeSelect(name, minRange, maxRange)
+{
+	var t= "";
+	t = "<select name='" + name + "' size='1'>";
+	for (j=minRange; j<=maxRange; j++)
+	   t += "<option>" + j + "</option>";
+	t+= "</select>";
+	return t;
+}
+
+function td(content, className="")
+{
+	return "<td class = '" + className + "'>" + content + "</td>";
+}
+
+</script>
+
+<h1>Jade Delight</h1>
+<form onchange = "main()" > <!-- onsubmit = "checkout()" action = "/action_page.php" > -->
+
+<p class="userInfo"><label>First Name:</label> <input type="text"  name='fname' /></p>
+<p class="userInfo"><label>Last Name*:</label>  <input type="text"  name='lname' /></p>
+<p class="userInfo address"><label>Street*:</label> <input type="text" name='street' /></p>
+<p class="userInfo address"><label>City*:</label> <input type="text" name='city' /></p>
+<p class="userInfo"><label>Phone*:</label> <input type="text"  name='phone' /></p>
+<p>
+	<input type="radio"  name="p_or_d" value = "pickup" checked="checked"/>Pickup
+	<input type="radio"  name='p_or_d' value = 'delivery'/>
+	Delivery
+</p>
+<table border="0" cellpadding="3">
+  <tr>
+    <th>Select Item</th>
+    <th>Item Name</th>
+    <th>Cost Each</th>
+    <th>Total Cost</th>
+  </tr>
+<script>
+
+  var s = "";
+  for (i=0; i< menuItems.length; i++)
+  {
+	  s += "<tr>";
+	  s += td(makeSelect("quan" + i, 0, 10),"selectQuantity");
+	  s += td(menuItems[i].name, "itemName");
+	  s += td("$" +menuItems[i].cost.toFixed(2), "cost");
+	  s += td("$<input type='text' name='cost'/>", "totalCost");
+	  s += "</tr>";
+  }
+  document.writeln(s);
+
+</script>
+</table>
+<p class="subtotal totalSection"><label>Subtotal</label>:
+   $ <input type="text"  name='subtotal' id="subtotal" />
+</p>
+<p class="tax totalSection"><label>Mass tax 6.25%:</label>
+  $ <input type="text"  name='tax' id="tax" />
+</p>
+<p class="total totalSection"><label>Total:</label> $ <input type="text"  name='total' id="total" />
+</p>
+
+<input type = "button" value = "Submit Order" onclick = "checkout()"/>
+
+
+
+
+<script>
+//-----------------------------Global variables---------------------------------
+subtotal = 0;
+tax = 0;
+total = 0;
+count = [];
+time = 0;
+error = ''
+for (i=0; i< menuItems.length; i++)
+{
+ 	 count.push(0);
+}
+//----------------function needed to be done before update----------------------
+hideordont();
+//---------------------------helper functions-----------------------------------
+function update(i,n,count){
+	cost = menuItems[i].cost * (n - count[i]);
+	subtotal = subtotal + cost;
+	tax = subtotal * .0625;
+	total = subtotal + tax;
+    document.getElementsByName("cost")[i].value = (menuItems[i].cost * n).toFixed(2)
+	document.getElementsByName("subtotal")[0].value = subtotal.toFixed(2);
+	document.getElementsByName("tax")[0].value = tax.toFixed(2);
+	document.getElementsByName("total")[0].value = total.toFixed(2);
+	return n;
+}
+
+function hideordont()
+{
+	if(document.getElementsByName('p_or_d')[0].checked){
+		document.getElementsByClassName("userInfo address")[0].style.display = 'none';
+		document.getElementsByClassName("userInfo address")[1].style.display = 'none';
+	}
+	else{
+		document.getElementsByClassName("userInfo address")[0].style.display = 'block';
+		document.getElementsByClassName("userInfo address")[1].style.display = 'block';
+	}
+}
+
+function validation() {
+	if(document.getElementsByName('lname')[0].value == '') {
+		error = 'last name required'
+		return false;
+	}
+	if((document.getElementsByName('phone')[0].value.length != 7) &&
+	   (document.getElementsByName('phone')[0].value.length != 10)) {
+		error = 'invalid phone number'
+		return false;
+	}
+	if(document.getElementsByName('p_or_d')[0].checked) {
+		time = 20;
+	}
+	else{
+		time = 40;
+		if((document.getElementsByName('city')[0].value == '') ||
+		   (document.getElementsByName('street')[0].value == '')) {
+			error = 'address needs to be filled out'
+			return false;
+		}
+	}
+	for (var i = 0; i < menuItems.length; i++) {
+		if (count[i] > 0) {
+			return true;
+		}
+	}
+	error = 'no food has been selected.'
+	return false;
+}
+
+function message(){
+	d = new Date();
+    t = new Date(d.getTime() + time*60000);
+	var hour = t.getHours()
+    var minute = t.getMinutes();
+	if (document.getElementsByName('p_or_d')[0].checked){
+		order = 'pickup'
+	}
+	else{
+		order = 'delivery'
+	}
+    total = document.getElementsByName("total")[0].value
+    confirmation= window.confirm("Order Summary!" +
+	"\n" + menuItems[0].name + "/" + count[0] + "/$" + menuItems[0].cost.toFixed(2) +
+	"\n" + menuItems[1].name + "/" + count[1] + "/$" + menuItems[1].cost.toFixed(2) +
+	"\n" + menuItems[2].name + "/" + count[2] + "/$" + menuItems[2].cost.toFixed(2) +
+	"\n" + menuItems[3].name + "/" + count[3] + "/$" + menuItems[3].cost.toFixed(2) +
+	"\n" + menuItems[4].name + "/" + count[4] + "/$" + menuItems[4].cost.toFixed(2) +
+	"\n\n\nSubtotal: $" + subtotal.toFixed(2) +
+	"\nTax: $" + tax.toFixed(2) +
+	"\nTotal: $" + total +
+    "\nEstimated " + order + " time: " + hour + ":" + (minute.toString().padStart(2, '0')));
+	if(confirmation){
+		window.alert("Thanks for your order!")
+	}
+	else{
+		window.alert("Your order has not been placed.")
+	}
+}
+
+
+//---------------------main functions for change and submit---------------------
+function main(){
+	for (var i = 0; i < menuItems.length; i++) {
+		n = parseInt(document.getElementsByName("quan" + i)[0].value);
+		if (count[i] != n){
+			count[i] = update(i,n,count);
+		}
+	}
+	hideordont();
+}
+
+function checkout(){
+	bool = validation();
+	if(bool){
+		message()
+		return bool
+	}
+	else{
+		alert(error)
+	}
+}
+</script>
+</form>
+</body>
+</html>
